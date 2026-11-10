@@ -1593,6 +1593,7 @@ async function scanFiles(files){
   }
 }
 
+function setCamMsg(t){ $("camMsg").textContent=t||""; }
 async function startCamera(){
   setCamMsg("");
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
