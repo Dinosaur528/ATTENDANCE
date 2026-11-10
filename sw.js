@@ -1,6 +1,6 @@
 /* Offline cache for the Attendance Scanner. After the first online visit the app opens with no internet.
    Bump CACHE when you publish a new index.html so phones pick up the update. */
-const CACHE = "attendance-scanner-v8";
+const CACHE = "attendance-scanner-v9";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

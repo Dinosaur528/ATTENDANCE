@@ -62,13 +62,16 @@ video{width:100%;height:100%;object-fit:cover;display:block}
 .status.walkin{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
 .status .walkin{display:none;margin-top:12px;text-align:left}
 .status.walkin .walkin{display:block}
-.walkin input{width:100%;font-size:18px;padding:12px;border-radius:10px;border:2px solid var(--warn);background:#fff;color:#000;box-sizing:border-box}
+.walkin input,.walkin select{width:100%;font-size:18px;padding:12px;border-radius:10px;border:2px solid var(--warn);background:#fff;color:#000;box-sizing:border-box}
+.walkin input+select,.walkin select+input{margin-top:8px}
 .walkin .wbtns{display:flex;gap:8px;margin-top:8px}
 .walkin .wbtns button{flex:1}
 .wi{font-size:10px;font-weight:700;background:var(--warn);color:#fff;border-radius:6px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 .status .actions{display:none;gap:10px;margin-top:12px}
 .status.confirm .actions{display:flex}
+.status .actions{flex-wrap:wrap}
 .status .actions button{flex:1}
+.status .actions #walkInsteadBtn{flex:1 1 100%}
 .tablewrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
@@ -137,7 +140,7 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
       <input type="file" id="photoFile" accept="image/*" capture="environment">
     </div>
     <img id="preview" alt="Last scanned image">
-    <div id="status" class="status" role="status" aria-live="polite"><div class="big"></div><div class="id"></div><div class="small"></div><div class="choices"></div><div class="walkin"><input id="walkName" type="text" placeholder="Full name" autocomplete="off" autocapitalize="words" enterkeyhint="done"><div class="wbtns"><button id="walkSave" type="button">✔ Save walk-in</button><button id="walkCancel" type="button" class="secondary">✖ Cancel</button></div></div><div class="actions"><button id="confirmBtn" type="button">✔ Confirm</button><button id="cancelBtn" type="button" class="secondary">✖ Cancel</button></div></div>
+    <div id="status" class="status" role="status" aria-live="polite"><div class="big"></div><div class="id"></div><div class="small"></div><div class="choices"></div><div class="walkin"><input id="walkName" type="text" placeholder="Full name" autocomplete="off" autocapitalize="words" enterkeyhint="next"><select id="walkGender" aria-label="Gender (optional)"><option value="">Gender (optional)</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><input id="walkEmail" type="email" inputmode="email" placeholder="Email (optional)" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done"><div class="wbtns"><button id="walkSave" type="button">✔ Save walk-in</button><button id="walkCancel" type="button" class="secondary">✖ Cancel</button></div></div><div class="actions"><button id="confirmBtn" type="button">✔ Confirm</button><button id="cancelBtn" type="button" class="secondary">✖ Cancel</button><button id="walkInsteadBtn" type="button" class="secondary">➕ Not them: add as walk-in</button></div></div>
     <p class="muted" id="camMsg"></p>
     <details style="margin-top:10px">
       <summary style="font-size:14px;cursor:pointer">Type an ID instead</summary>
@@ -227,13 +230,14 @@ const LOCK_MIN_MS = 1200;
 const SNAP_MAX = 2;           // max weighted edit distance when snapping a misread to the registry
 
 const K = {
-  students:"me_students_v1", emails:"me_emails_v1", log:"me_log_v1",
+  students:"me_students_v1", emails:"me_emails_v1", genders:"me_genders_v1", log:"me_log_v1",
   bkA:"me_backup_A", bkB:"me_backup_B", bkSeq:"me_backup_seq", auto:"me_autodl", dev:"me_device", strict:"me_strict", dups:"me_dups_v1"
 };
 
 /* ---------- State ---------- */
 let students = {};   // normalized id -> name
 let dups = {};       // id shared by several students -> [{name,email}] (the operator picks at scan time)
+let genders = {};    // normalized id -> "Male" / "Female" / other text (optional)
 let emails = {};     // normalized id -> valid @umindanao.edu.ph email (only valid ones are kept)
 let log = [];        // {id,name,ts,reg}
 let stream = null, detector = null, detectorReady = false, loopTimer = null, scanning = false;
@@ -587,7 +591,7 @@ async function decodeCanvas(cv, live){
 }
 
 /* ---------- Storage (primary + rotating backups + IndexedDB) ---------- */
-function snapshot(){ return JSON.stringify({v:2,t:Date.now(),students,emails,dups,log}); }
+function snapshot(){ return JSON.stringify({v:2,t:Date.now(),students,emails,genders,dups,log}); }
 
 function idbSave(json){ return idbPut("snapshot",json).then(()=>true,()=>false); }
 function idbLoad(){ return idbGet("snapshot").then(v=>v||null,()=>null); }
@@ -618,7 +622,7 @@ function persist(){
   // order matters: the log (what cannot be re-imported) is written first, each write on its own,
   // so one failure (phone storage full) can never stop the others
   let lsOk = lsSet(K.log, JSON.stringify(log));
-  const heavy = [[K.students,JSON.stringify(students)],[K.emails,JSON.stringify(emails)],[K.dups,JSON.stringify(dups)]];
+  const heavy = [[K.students,JSON.stringify(students)],[K.emails,JSON.stringify(emails)],[K.genders,JSON.stringify(genders)],[K.dups,JSON.stringify(dups)]];
   let heavyOk = heavy.every(([k,v])=>lsSet(k,v));
   if(!heavyOk){                                   // full: drop the two rotating localStorage copies, keep the app-database copy
     try{ localStorage.removeItem(K.bkA); localStorage.removeItem(K.bkB); }catch(e){}
@@ -676,6 +680,7 @@ async function load(){
     if(s && typeof s==="object" && Array.isArray(l)){ students=s; log=l; okPrimary=true; }
     else if(s && typeof s==="object"){ students=s; okPrimary=true; }
     if(okPrimary && em && typeof em==="object") emails=em;
+    if(okPrimary){ const gn=JSON.parse(localStorage.getItem(K.genders)||"null"); if(gn&&typeof gn==="object") genders=gn; }
     if(okPrimary){ const dp=JSON.parse(localStorage.getItem(K.dups)||"null"); if(dp&&typeof dp==="object") dups=dp; }
   }catch(e){}
   if(!okPrimary){
@@ -684,7 +689,7 @@ async function load(){
     const idb = await idbLoad(); const o = idb && parseSnap(idb); if(o) cands.push(o);
     cands.sort((a,b)=>(b.log.length-a.log.length)||(b.t-a.t));
     if(cands.length){
-      students=cands[0].students; log=cands[0].log; emails=cands[0].emails||{}; dups=cands[0].dups||{};
+      students=cands[0].students; log=cands[0].log; emails=cands[0].emails||{}; genders=cands[0].genders||{}; dups=cands[0].dups||{};
       const extra=await mergeJournal();
       persist();
       showStatus("info","Data recovered","Restored from automatic backup ("+log.length+" scans"+(extra?", "+extra+" of them from the app database":"")+").");
@@ -734,6 +739,16 @@ function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 const UM_EMAIL = /^[^\s@,;"'<>()]+@umindanao\.edu\.ph$/i;
 function umEmail(v){ v=String(v||"").trim().toLowerCase(); return UM_EMAIL.test(v)?v:""; }
 function emailFor(id,rec){ if(rec&&rec.em!==undefined) return rec.em; const k=findKey(id); return k ? (emails[k]||"") : ""; }
+/* v9: optional gender and (any) email for walk-ins and for registry imports */
+function normGender(v){
+  v=String(v||"").replace(/\s+/g," ").trim(); if(!v) return "";
+  if(/^(m|male|man|boy|lalaki)$/i.test(v)) return "Male";
+  if(/^(f|female|woman|girl|babae)$/i.test(v)) return "Female";
+  return v.slice(0,20);
+}
+const ANY_EMAIL=/^[^\s@,;"'<>()]+@[^\s@,;"'<>()]+\.[^\s@,;"'<>()]+$/;
+function anyEmail(v){ v=String(v||"").trim().toLowerCase(); return ANY_EMAIL.test(v)?v:""; }
+function genderFor(id,rec){ if(rec&&rec.g!==undefined) return rec.g; const k=findKey(id); return k?(genders[k]||""):""; }
 
 const LOG_SHOW=10;   // rows shown without a search: keeps the page fast with thousands of scans
 function renderAll(){
@@ -752,7 +767,7 @@ function renderAll(){
     shown++;
     const tr=document.createElement("tr");
     if(!r.reg) tr.className="unreg";
-    tr.innerHTML = "<td>"+esc(r.id)+"</td><td class='nm'>"+esc(r.reg?r.name:"Not registered")+(r.wi?"<span class='wi'>WALK-IN</span>":"")+(emailFor(r.id,r)?"<div class='em'>"+esc(emailFor(r.id,r))+"</div>":"")+"</td><td>"+esc(fmtClock(r.ts))+"</td>"+
+    tr.innerHTML = "<td>"+esc(r.id)+"</td><td class='nm'>"+esc(r.reg?r.name:"Not registered")+(r.wi?"<span class='wi'>WALK-IN</span>":"")+((genderFor(r.id,r)||emailFor(r.id,r))?"<div class='em'>"+esc([genderFor(r.id,r),emailFor(r.id,r)].filter(Boolean).join(" · "))+"</div>":"")+"</td><td>"+esc(fmtClock(r.ts))+"</td>"+
       "<td class='del'><button aria-label='Delete "+esc(r.id)+"' data-i='"+i+"'>❌</button></td>";
     body.appendChild(tr);
   }
@@ -788,21 +803,23 @@ function importCSV(file){
     const hdr=rows[0].map(x=>String(x||"").trim().toLowerCase());
     const isEmailH=x=>/e-?mail/.test(x), isNameH=x=>/^(student\s*)?name/.test(x), isIdH=x=>/^(student\s*)?(id|no\.?|number|#)(\s*(no\.?|number))?$/.test(x);
     const hasHeader = hdr.some(x=>isEmailH(x)||isNameH(x)||isIdH(x));
-    let idCol=0, nameCol=-1, emailCol=-1;
+    let idCol=0, nameCol=-1, emailCol=-1, genCol=-1;
     if(hasHeader){
       const ii=hdr.findIndex(isIdH); if(ii>=0) idCol=ii;
       nameCol=hdr.findIndex(isNameH);
+      genCol=hdr.findIndex(x=>/gender|^sex\b/.test(x));
       emailCol=hdr.findIndex(x=>isEmailH(x)&&/umindanao|\bum\b|school|official|institution/.test(x));
       if(emailCol<0) emailCol=hdr.findIndex(isEmailH);
       rows.shift();
     }
-    const next={}, nextEm={}, lists={}; let bad=0, umCount=0, otherEm=0;
+    const next={}, nextEm={}, nextGen={}, lists={}; let bad=0, umCount=0, otherEm=0;
     rows.forEach(r=>{
       const id=normId(r[idCol]);
-      let name="", rawEmail="";
+      let name="", rawEmail="", gen="";
       if(hasHeader && nameCol>=0){
         name=String(r[nameCol]||"").trim();
         rawEmail = emailCol>=0 ? String(r[emailCol]||"").trim() : "";
+        gen = genCol>=0 ? normGender(r[genCol]) : "";
       }else{
         const rest=r.filter((_,i)=>i!==idCol).map(x=>String(x||"").trim()).filter(Boolean);
         const em=rest.filter(x=>x.indexOf("@")>=0);
@@ -812,7 +829,7 @@ function importCSV(file){
       if(id && name){
         const okE=umEmail(rawEmail);
         const L=lists[id]||(lists[id]=[]);
-        if(!L.some(x=>x.name.toLowerCase()===name.toLowerCase())) L.push({name,email:okE});
+        if(!L.some(x=>x.name.toLowerCase()===name.toLowerCase())) L.push({name,email:okE,g:gen});
         next[id]=next[id]||name;
         const ok=umEmail(rawEmail);
         if(ok){ nextEm[id]=ok; umCount++; }
@@ -822,11 +839,11 @@ function importCSV(file){
     const n=Object.keys(next).length;
     if(!n){ showStatus("warn","Nothing imported","Each row needs an ID and a name."); return; }
     const nd={}; let shared=0;
-    for(const id in lists){ if(lists[id].length>1){ nd[id]=lists[id]; shared++; } nextEm[id]=lists[id][0].email; if(!nextEm[id]) delete nextEm[id]; }
-    students=next; emails=nextEm; dups=nd;
+    for(const id in lists){ if(lists[id].length>1){ nd[id]=lists[id]; shared++; } nextEm[id]=lists[id][0].email; if(!nextEm[id]) delete nextEm[id]; nextGen[id]=lists[id][0].g; if(!nextGen[id]) delete nextGen[id]; }
+    students=next; emails=nextEm; genders=nextGen; dups=nd;
     log.forEach(e=>{ const k=findKey(e.id); if(k){ e.reg=true; if(!(nd[k]&&nd[k].some(x=>x.name===e.name))) e.name=students[k]; } });
     persist(); renderAll();
-    showStatus("ok","Registry imported",n+" students · "+umCount+" with a UMindanao email"+(otherEm?(" · "+otherEm+" non-UMindanao email(s) ignored"):"")+(bad?(" · "+bad+" rows skipped"):"")+(shared?(" · "+shared+" ID"+(shared===1?"":"s")+" shared by several students (you will choose when scanning)"):"")+".",!!shared);
+    showStatus("ok","Registry imported",n+" students · "+umCount+" with a UMindanao email"+(Object.keys(nextGen).length?" · "+Object.keys(nextGen).length+" with gender":"")+(otherEm?(" · "+otherEm+" non-UMindanao email(s) ignored"):"")+(bad?(" · "+bad+" rows skipped"):"")+(shared?(" · "+shared+" ID"+(shared===1?"":"s")+" shared by several students (you will choose when scanning)"):"")+".",!!shared);
   };
   reader.onerror=()=>showStatus("warn","Could not read file","Try saving the CSV again.");
   reader.readAsText(file);
@@ -847,7 +864,8 @@ function autoBackup(){ if($("autoDl").checked&&log.length&&log.length%AUTO_EVERY
 function exportCSV(){
   const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
   const dateOf=ts=>{ const d=new Date(ts), p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
-  const lines=["ID,Name,Date,Time,UMindanao Email"].concat(log.slice().sort((a,b)=>a.ts-b.ts).map(r=>[q(r.id),q(r.reg?r.name:""),q(dateOf(r.ts)),q(fmtClock(r.ts)),q(umEmail(emailFor(r.id,r)))].join(",")));
+  const otherEmail=r=>{ const e=anyEmail(emailFor(r.id,r)); return (e&&!umEmail(e))?e:""; };
+  const lines=["ID,Name,Date,Time,UMindanao Email,Gender,Other Email"].concat(log.slice().sort((a,b)=>a.ts-b.ts).map(r=>[q(r.id),q(r.reg?r.name:""),q(dateOf(r.ts)),q(fmtClock(r.ts)),q(umEmail(emailFor(r.id,r))),q(genderFor(r.id,r)),q(otherEmail(r))].join(",")));
   const blob=new Blob([lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
   saveFile(blob,fileName("CSV","csv"));
 }
@@ -898,6 +916,7 @@ function colKind(t){
   t=t.toLowerCase().trim();
   if(/^(no\.?|#|number)$/.test(t)) return "no";
   if(/e-?mail/.test(t)) return "email";
+  if(/gender|^sex\b/.test(t)) return "gender";
   if(/\bid\b|student\s*(no|number)/.test(t)) return "id";
   if(/name/.test(t)) return "name";
   if(/date/.test(t)) return "date";
@@ -928,7 +947,7 @@ function fillXml(){
   const xml=dec(layout.files["word/document.xml"]), t=findTable(xml);
   const recs=log.slice().sort((a,b)=>a.ts-b.ts), tpl=t.rows[t.hi+1]||t.rows[t.hi];
   const ds=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());};
-  const val=(k,r,i)=>k==="no"?i+1:k==="id"?r.id:k==="name"?r.name:k==="email"?emailFor(r.id,r):k==="date"?ds(r.ts):k==="time"?fmtClock(r.ts):"";
+  const val=(k,r,i)=>k==="no"?i+1:k==="id"?r.id:k==="name"?r.name:k==="email"?emailFor(r.id,r):k==="gender"?genderFor(r.id,r):k==="date"?ds(r.ts):k==="time"?fmtClock(r.ts):"";
   const body=recs.map((r,i)=>{ let k=0; return tpl.replace(/<w:tc>[\s\S]*?<\/w:tc>/g,tc=>setCell(tc,val(t.kinds[k++],r,i))); }).join("");
   const hdrEnd=t.tbl.indexOf(t.rows[t.hi])+t.rows[t.hi].length;
   const nt=t.tbl.slice(0,hdrEnd)+body+"</w:tbl>";
@@ -967,7 +986,7 @@ const colLet=n=>{ let s=""; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(
 const splitRef=r=>{ const m=/^([A-Z]+)(\d+)$/.exec(r||""); return m?{c:colNum(m[1]),r:+m[2]}:null; };
 const dayStr=ts=>{ const d=new Date(ts),p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
 function recVal(k,r,i){
-  return k==="no"?i+1:k==="id"?r.id:k==="name"?r.name:k==="email"?emailFor(r.id,r):k==="date"?dayStr(r.ts):k==="time"?fmtClock(r.ts):"";
+  return k==="no"?i+1:k==="id"?r.id:k==="name"?r.name:k==="email"?emailFor(r.id,r):k==="gender"?genderFor(r.id,r):k==="date"?dayStr(r.ts):k==="time"?fmtClock(r.ts):"";
 }
 const todayLong=()=>new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
 const fillTokens=s=>s.replace(/\{\{DATE\}\}/g,todayLong()).replace(/\{\{TOTAL\}\}/g,String(log.length));
@@ -1395,7 +1414,7 @@ async function idbDel(k){ const db=await idbOpen(); return new Promise(res=>{ co
 
 const layoutFind=()=>!layout?null:layout.type==="xlsx"?xlsxFind(layout.files):findTable(dec(layout.files["word/document.xml"]));
 function renderLayout(){
-  const L={no:"No.",id:"ID",name:"Name",email:"Email",date:"Date",time:"Time",sig:"Signature"};
+  const L={no:"No.",id:"ID",name:"Name",email:"Email",gender:"Gender",date:"Date",time:"Time",sig:"Signature"};
   let txt="No layout imported.";
   if(layout){
     let t=null; try{ t=layoutFind(); }catch(e){}
@@ -1483,7 +1502,7 @@ function scansFromText(text){
   if(/^\s*\{/.test(text)){
     const o=parseSnap(text); if(!o||!Array.isArray(o.log)) return null;
     const list=[]; let bad=0;
-    o.log.forEach(e=>{ if(e&&e.id&&typeof e.ts==="number"&&e.ts>0) list.push({id:e.id,ts:e.ts,name:e.name||"",wi:!!e.wi}); else bad++; });
+    o.log.forEach(e=>{ if(e&&e.id&&typeof e.ts==="number"&&e.ts>0) list.push({id:e.id,ts:e.ts,name:e.name||"",wi:!!e.wi,g:e.g||"",em:e.em||""}); else bad++; });
     return {list,bad,skipped:0};
   }
   const rows=parseCSV(text); if(!rows.length) return null;
@@ -1491,13 +1510,14 @@ function scansFromText(text){
   const iId=hdr.findIndex(x=>/^(student\s*)?(id|no\.?|number|#)(\s*(no\.?|number))?$/.test(x));
   const iDate=hdr.indexOf("date"), iTime=hdr.indexOf("time"), iReg=hdr.indexOf("registered"), iName=hdr.findIndex(x=>/^(student\s*)?name/.test(x));
   const iStamp=hdr.findIndex(x=>/time\s*stamp|timestamp/.test(x));
+  const iGen=hdr.findIndex(x=>/gender|^sex\b/.test(x)), iEm=hdr.findIndex(x=>/umindanao.*e-?mail/.test(x)), iOth=hdr.findIndex(x=>/^other\s*e-?mail/.test(x));
   if(iId<0 || (iStamp<0 && (iDate<0||iTime<0))) return null;   // e.g. a registry CSV picked by mistake
   const list=[]; let bad=0, skipped=0;
   rows.slice(1).forEach(r=>{
     if(iReg>=0 && /^no$/i.test(String(r[iReg]||"").trim())){ skipped++; return; }
     const ts = iStamp>=0 ? parseWhen(r[iStamp],r[iStamp]) : parseWhen(r[iDate],r[iTime]);
     const id=normId(r[iId]);
-    if(id&&ts) list.push({id,ts,name:iName>=0?String(r[iName]||"").trim():""}); else bad++;
+    if(id&&ts) list.push({id,ts,name:iName>=0?String(r[iName]||"").trim():"",g:iGen>=0?normGender(r[iGen]):"",em:String((iEm>=0&&r[iEm])||(iOth>=0&&r[iOth])||"").trim()}); else bad++;
   });
   return {list,bad,skipped};
 }
@@ -1516,7 +1536,10 @@ async function mergeFiles(files){
         if(e.name){   // not in this registry but has a name: a walk-in added on another phone, bring the person over too
           const id=normId(e.id), have=log.find(r=>r.id===id);
           if(!students[id]) students[id]=e.name;
-          if(have){ dup++; if(e.ts<have.ts){ have.ts=e.ts; earlier++; } } else{ log.push({id,name:e.name,ts:e.ts,reg:true,wi:true}); added++; walkIn++; }
+          const wg=normGender(e.g), we=anyEmail(e.em);
+          if(wg&&!genders[id]) genders[id]=wg; if(we&&!emails[id]) emails[id]=we;
+          if(have){ dup++; if(e.ts<have.ts){ have.ts=e.ts; earlier++; } if(wg&&!have.g) have.g=wg; if(we&&!have.em) have.em=we; }
+          else{ const rec={id,name:e.name,ts:e.ts,reg:true,wi:true}; if(wg) rec.g=wg; if(we) rec.em=we; log.push(rec); added++; walkIn++; }
         } else unreg++;
         return;
       }
@@ -1545,19 +1568,24 @@ async function mergeFiles(files){
 /* ---------- Recording a scan ---------- */
 function showWalkin(id){
   if(pending&&pending.walkin&&pending.id===id) return;   // camera keeps seeing the code: do not wipe a half-typed name
-  showStatus("walkin","Not registered: add as walk-in","Type the name, then tap Save. They are logged now and added to the registry.",true,"ID "+id);
+  showStatus("walkin","Not registered: add as walk-in","Type the name. Gender and email are optional. They are logged now and added to the registry.",true,"ID "+id);
   pending={id,walkin:true};
-  const i=$("walkName"); i.value=""; setTimeout(()=>{ try{ i.focus(); }catch(e){} },50);
+  const i=$("walkName"); i.value=""; $("walkGender").value=""; $("walkEmail").value=""; setTimeout(()=>{ try{ i.focus(); }catch(e){} },50);
 }
 function saveWalkin(){
   if(!pending||!pending.walkin) return;
   const id=pending.id, name=$("walkName").value.replace(/\s+/g," ").trim();
   if(!name){ $("walkName").focus(); return; }
+  const gender=normGender($("walkGender").value), emRaw=$("walkEmail").value.trim(), email=anyEmail(emRaw);
+  if(emRaw && !email){ alert("That email does not look right. Fix it, or leave the email blank."); $("walkEmail").focus(); return; }
   if(log.some(r=>r.id===id)){ pending=null; showStatus("dup","Already scanned","ID "+id+" is already in the log.",false); return; }
   const now=Date.now();
   if(!students[id]) students[id]=name;
-  log.push({id,name,ts:now,reg:true,wi:true});
-  pending=null; $("walkName").blur();
+  if(gender) genders[id]=gender;
+  if(email) emails[id]=email;
+  const rec={id,name,ts:now,reg:true,wi:true}; if(gender) rec.g=gender; if(email) rec.em=email;
+  log.push(rec);
+  pending=null; $("walkName").blur(); $("walkEmail").blur();
   persist(); renderAll();
   showStatus("ok","✔ "+name,"Walk-in added · "+fmtClock(now),false,"ID "+id); beep(880,120); buzz(80);
   autoBackup();
@@ -1575,7 +1603,7 @@ function pickShared(id,i){
   const have=log.find(r=>r.id===id&&r.name===x.name);
   if(have){ showStatus("dup","Already scanned",x.name+" · first scanned at "+fmtClock(have.ts),false,"ID "+id); beep(330,200); buzz([60,40,60]); return; }
   const now=Date.now();
-  log.push({id,name:x.name,ts:now,reg:true,em:x.email||""});
+  { const rec={id,name:x.name,ts:now,reg:true,em:x.email||""}; if(x.g) rec.g=x.g; log.push(rec); }
   persistScan(); renderAll();
   showStatus("ok","✔ "+x.name,"Registered · "+fmtClock(now),false,"ID "+id); beep(880,120); buzz(80);
   autoBackup();
@@ -1589,12 +1617,12 @@ function record(raw,opts){
   lastAccepted[id]=now;
 
   let key=findKey(id), fixedFrom="";
-  if(!key){ const fk=snapKey(id); if(fk){ key=fk; fixedFrom=id; } }
+  if(!key && !(opts&&opts.manual)){ const fk=snapKey(id); if(fk){ key=fk; fixedFrom=id; } }   // v9: a typed ID is deliberate, never guessed at
   const name=key?students[key]:"";
   if(key) id=key;
   const shared=key&&dups[key]&&dups[key].length>1?dups[key]:null;
   const already=shared?null:log.find(r=>r.id===id);
-  if(already){
+  if(already && !fixedFrom){   // v9: only an exact read can be called a duplicate; a corrected read must ask first
     if(!(opts&&opts.quiet)){
       showStatus("dup","Already scanned",(already.reg?already.name+" · ":"")+"first scanned at "+fmtClock(already.ts),false,"ID "+id);
       beep(330,200); buzz([60,40,60]);
@@ -1605,7 +1633,7 @@ function record(raw,opts){
     // The read had to be corrected (e.g. 9555704 -> S555704): never log it without a tap on Confirm
     if(opts&&opts.quiet) return "confirm";
     pending={id,from:fixedFrom};
-    showStatus("confirm","Is this the right student?","Read as "+fixedFrom+", closest registered match is "+name+".",true,"ID "+id+" · "+name);
+    showStatus("confirm","Is this the right student?","Read as "+fixedFrom+", closest registered match is "+name+"."+(already?" (Already scanned at "+fmtClock(already.ts)+".)":""),true,"ID "+id+" · "+name);
     beep(520,150); buzz([40,40]);
     return "confirm";
   }
@@ -1853,11 +1881,16 @@ $("status").addEventListener("click",e=>{
 });
 $("walkSave").addEventListener("click",saveWalkin);
 $("walkName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); saveWalkin(); } });
+$("walkEmail").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); saveWalkin(); } });
 $("walkCancel").addEventListener("click",()=>{ pending=null; $("walkName").blur(); $("status").className="status"; });
 $("confirmBtn").addEventListener("click",()=>{
   if(!pending) return;
   const id=pending.id; pending=null;
   record(id,{force:true});
+});
+$("walkInsteadBtn").addEventListener("click",()=>{
+  if(!pending||!pending.from) return;
+  const raw=normId(pending.from); pending=null; showWalkin(raw);   // the code was read correctly: it belongs to someone who is not in the registry
 });
 $("cancelBtn").addEventListener("click",()=>{
   pending=null; $("status").className="status";
@@ -1878,7 +1911,7 @@ $("restoreFile").addEventListener("change",e=>{
     const o=parseSnap(String(r.result));
     if(!o||!Array.isArray(o.log)){ showStatus("warn","Invalid backup","That file is not an ME Assembly backup."); return; }
     if(!confirm("Replace the current registry and log with this backup ("+o.log.length+" scans, "+Object.keys(o.students).length+" students)?")) return;
-    students=o.students; emails=o.emails||{}; dups=o.dups||{}; log=o.log; lastAccepted={}; persist(); renderAll();
+    students=o.students; emails=o.emails||{}; genders=o.genders||{}; dups=o.dups||{}; log=o.log; lastAccepted={}; persist(); renderAll();
     showStatus("ok","Backup restored",o.log.length+" scans loaded.");
   };
   r.readAsText(f);
@@ -1914,8 +1947,8 @@ $("resetBtn").addEventListener("click",()=>{
   if(!confirm("Last check: a CSV of the current log will download first. Continue with reset?")) return;
   if(log.length) exportCSV();
   setTimeout(()=>{
-    students={}; emails={}; dups={}; log=[]; lastAccepted={};
-    [K.students,K.emails,K.dups,K.log,K.bkA,K.bkB,K.bkSeq].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
+    students={}; emails={}; genders={}; dups={}; log=[]; lastAccepted={};
+    [K.students,K.emails,K.genders,K.dups,K.log,K.bkA,K.bkB,K.bkSeq].forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} });
     idbSave(snapshot()); idbPut("journal","[]").catch(()=>{});
     renderAll(); showStatus("info","Data reset","Registry and log cleared.");
   },600);
