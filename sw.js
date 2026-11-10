@@ -4,9 +4,9 @@
    - Other files (icons, manifest): cached copy first, refreshed quietly in the background.
    - Student data and scans live in localStorage / IndexedDB, which this file never touches.
    When you change index.html, bump VERSION below so phones drop the old cache. */
-const VERSION = "v10c";
+const VERSION = "v11-board";
 const CACHE = "attendance-" + VERSION;
-const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const SHELL = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "JetBrainsMono.woff2"];
 
 self.addEventListener("install", event => {
   event.waitUntil((async () => {

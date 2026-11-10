@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14213d">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -11,31 +12,34 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Attendance">
 <title>ATTENDANCE SCANNER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=JetBrains+Mono:wght@500;700;800&display=swap">
 <style>
 :root{
-  --ink:#14213d; --paper:#f5f3ee; --card:#ffffff; --line:#d9d5ca; --muted:#5b6475;
-  --ok:#1b8a4b; --ok-bg:#dff5e7; --warn:#c2570c; --warn-bg:#ffe6cf; --dup:#8a6d00; --dup-bg:#fff4c2;
-  --brand:#14213d; --accent:#e0a100; --danger:#b3261e; --onbrand:#fff;
+  color-scheme:dark;
+  --ink:#f4f1ea; --paper:#0d0d0d; --card:#141414; --line:rgba(244,241,234,.30); --muted:#a8a59d;
+  --ok:#4ade80; --ok-bg:#12351f; --warn:#fb923c; --warn-bg:#3b2311; --dup:#facc15; --dup-bg:#3a3109;
+  --brand:#f4f1ea; --accent:#f4f1ea; --danger:#f87171; --onbrand:#0d0d0d;
+  --mono:"JetBrains Mono","JBM Local",ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono","Courier New",monospace;
+  --display:Anton,Impact,"Haettenschweiler","Arial Narrow Bold","Arial Narrow",sans-serif;
+  --noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-@media (prefers-color-scheme: dark){
-  :root{ --ink:#eef0f5; --paper:#10151f; --card:#1a2130; --line:#2c3547; --muted:#9aa4b8;
-    --ok:#4ade80; --ok-bg:#12351f; --warn:#fb923c; --warn-bg:#3b2311; --dup:#facc15; --dup-bg:#3a3109;
-    --brand:#e0a100; --danger:#f87171; --onbrand:#10151f; }
-}
+@font-face{font-family:"JBM Local";src:local("JetBrains Mono"),local("JetBrainsMono-Regular"),url("JetBrainsMono.woff2") format("woff2");font-weight:100 800;font-display:swap}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--paper);color:var(--ink);
+html,body{margin:0;background:var(--paper) var(--noise);color:var(--ink);
   font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;-webkit-text-size-adjust:100%}
-body{padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-header{background:#14213d;color:#fff;padding:16px 16px 14px;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-header h1{margin:0;font-size:22px;letter-spacing:.3px;font-family:Georgia,"Times New Roman",serif}
-header h1 span{color:var(--accent)}
-.counts{font-size:13px;opacity:.9;text-align:right}
-main{max-width:640px;margin:0 auto;padding:14px}
-section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
-h2{margin:0 0 10px;font-size:16px;font-family:Georgia,serif}
-button,.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 16px;background:var(--brand);color:var(--onbrand);cursor:pointer;min-height:46px;text-align:center;display:flex;align-items:center;justify-content:center}
-button.secondary,.btn.secondary{background:transparent;color:var(--ink);border:2px solid var(--line)}
-button.danger{background:var(--danger);color:#fff}
+body{padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column}
+header.top,main,.foot{width:100%}
+.foot{margin-top:auto!important}
+h2{margin:0 0 10px;font-size:16px;font-family:var(--display);letter-spacing:.5px}
+button,.btn{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.2px;border:2px solid var(--ink);border-radius:5px;padding:11px 14px;
+  background:var(--brand);color:var(--onbrand);cursor:pointer;min-height:46px;text-align:center;display:flex;align-items:center;justify-content:center;
+  box-shadow:3px 3px 0 rgba(244,241,234,.22);
+  background-image:radial-gradient(circle at 9px 50%,rgba(0,0,0,.4) 2.2px,transparent 2.8px),radial-gradient(circle at calc(100% - 9px) 50%,rgba(0,0,0,.4) 2.2px,transparent 2.8px)}
+button:active,.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(244,241,234,.22)}
+button.secondary,.btn.secondary{background:transparent;color:var(--ink);border:2px dashed var(--line);box-shadow:none;background-image:none}
+button.danger{background:var(--danger);color:#1a0705;border-color:var(--danger)}
 button:disabled{opacity:.45}
 button:focus-visible,input:focus-visible,label.btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -105,27 +109,189 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
   #printSheet tr{break-inside:avoid}
 }
 .em{font-size:11px;font-weight:400;color:var(--muted);word-break:break-all;margin-top:2px}
+
+
+/* ---------- chalkboard layout ---------- */
+input[type=text],input[type=search],input[type=email],select{font-family:var(--mono);font-size:14px;padding:12px;border-radius:5px;border:2px solid var(--line);background:#0a0a0a;color:var(--ink)}
+input[type=search]{width:100%}
+input::placeholder{color:#77756f}
+label.toggle input{accent-color:#f4f1ea}
+details summary{font-family:var(--mono)}
+.orn{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;color:var(--ink);overflow:visible;flex:none}
+
+header.top{position:relative;overflow:hidden;padding:22px 16px 16px;display:block;background:transparent;color:var(--ink);max-width:640px;margin:0 auto}
+header.top h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(40px,13vw,58px);line-height:.95;letter-spacing:1px;text-transform:uppercase;position:relative;-webkit-text-stroke:1px currentColor}
+header.top h1 span{display:block;color:var(--ink)}
+.plate{display:inline-block;margin-top:12px;background:var(--ink);color:#0d0d0d;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1.5px;padding:6px 12px;position:relative}
+.counts{position:relative;display:inline-block;margin:12px 0 0 10px;font-family:var(--mono);font-size:12px;font-weight:700;border:2px solid var(--ink);padding:4px 10px;border-radius:99px;text-align:left}
+.grid-deco{position:absolute;right:-4px;top:-4px;width:150px;height:96px;opacity:.5;border:1px solid rgba(244,241,234,.5);
+  background-image:linear-gradient(rgba(244,241,234,.55) 1px,transparent 1px),linear-gradient(90deg,rgba(244,241,234,.55) 1px,transparent 1px);background-size:19px 19px}
+.xs{position:absolute;right:18px;top:112px;display:flex;gap:6px}
+.xs .orn{width:20px;height:20px;stroke-width:6}
+header.top .xs{top:86px;bottom:auto;right:16px}
+
+main{max-width:640px;margin:0 auto;padding:6px 14px 10px}
+.view{display:none}
+.view.on{display:block;animation:fadein .18s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* two main buttons */
+.mainbtn{position:relative;display:block;width:100%;text-align:left;min-height:108px;padding:14px 16px;margin:18px 0 22px;border:2px solid var(--ink);border-radius:6px;
+  background:rgba(244,241,234,.04);color:var(--ink);box-shadow:5px 5px 0 rgba(244,241,234,.22);overflow:visible;background-image:none}
+.mainbtn .mb-no{position:absolute;left:14px;top:-11px;background:var(--paper);padding:0 8px;font-size:12px;letter-spacing:2px;color:var(--muted)}
+.mainbtn .mb-title{display:block;font-family:var(--display);font-weight:400;font-size:34px;line-height:1.05;letter-spacing:1px;text-transform:uppercase;padding-right:96px;-webkit-text-stroke:.8px currentColor}
+.mainbtn .mb-sub{display:inline-block;margin-top:10px;background:var(--ink);color:#0d0d0d;font-size:11.5px;letter-spacing:.3px;padding:4px 9px;font-weight:700}
+.mainbtn .mb-orn{position:absolute;width:62px;height:62px}
+.mainbtn .mb-orn.a{right:56px;top:-22px;width:70px;height:70px;transform:rotate(-12deg)}
+.mainbtn .mb-orn.b{right:8px;top:30px;transform:rotate(14deg)}
+.mainbtn:active{transform:translate(2px,2px);box-shadow:3px 3px 0 rgba(244,241,234,.22)}
+
+/* view bar */
+.viewbar{display:flex;align-items:center;gap:8px;margin:10px 0 22px}
+.viewbar .vtitle{flex:1;font-family:var(--display);font-size:18px;letter-spacing:.8px;padding-left:4px;white-space:nowrap;-webkit-text-stroke:.6px currentColor}
+button.back{min-height:38px;padding:6px 12px;font-size:12px;background:var(--ink);color:#0d0d0d;background-image:none}
+button.mini{min-height:38px;padding:6px 9px;font-size:11px;background:transparent;color:var(--ink);border:2px dashed var(--line);box-shadow:none;background-image:none}
+
+/* collapsible category */
+section.sec{position:relative;background:var(--card);border:2px solid var(--line);border-radius:6px;padding:0;margin:0 0 26px}
+.sec-head{position:relative;width:100%;justify-content:flex-start;gap:10px;background:transparent;color:var(--ink);border:0;box-shadow:none;background-image:none;
+  min-height:56px;padding:12px 72px 12px 14px;text-align:left;border-radius:4px}
+.sec-head:active{transform:none;box-shadow:none}
+.sec-head .num{font-size:11px;letter-spacing:1px;color:#0d0d0d;background:var(--ink);padding:2px 6px;border-radius:3px}
+.sec-head .ttl{font-size:14px;letter-spacing:1px;text-transform:uppercase}
+.sec-head .chev{margin-left:auto;width:10px;height:10px;border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s;flex:none}
+.sec.collapsed .sec-head .chev{transform:rotate(-45deg)}
+.live-dot{display:none;font-size:10px;letter-spacing:1px;color:#fff;background:#d33;border-radius:99px;padding:1px 7px}
+.sec.live .live-dot{display:inline-block;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.35}}
+.cbody{padding:2px 14px 16px}
+.sec.collapsed .cbody{padding-bottom:10px}
+.sec.collapsed .cbody>*:not(#status):not(#camMsg){display:none!important}
+.sec.collapsed .cbody{padding-top:0}
+.sec.collapsed .cbody:not(:has(#status.show)){display:none}
+
+/* ornaments poking out of each category's top-right corner */
+.sec>.orn{position:absolute;right:12px;top:-20px;width:58px;height:58px;padding:3px;background:var(--paper) var(--noise);border-radius:50%;pointer-events:none}
+.o-scan{transform:rotate(18deg)}
+.o-reg{transform:rotate(-8deg)}
+.o-log{transform:rotate(-32deg)}
+.o-safe{transform:rotate(14deg)}
+.o-merge{transform:rotate(10deg)}
+.o-layout{transform:rotate(-14deg)}
+
+/* Import CSV: gear banner like the logo */
+.btn.import{position:relative;min-height:76px;background:transparent;border:0;box-shadow:none;background-image:none;color:var(--ink);overflow:visible;padding:0 14px}
+.btn.import .emb{position:absolute;left:50%;top:50%;width:76px;height:76px;transform:translate(-50%,-50%);color:var(--ink);fill:var(--ink);opacity:.92}
+.btn.import::before,.btn.import::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--ink) 10%,var(--ink) 90%,transparent)}
+.btn.import::before{top:22px}.btn.import::after{bottom:22px}
+.btn.import span{position:relative;z-index:1;font-size:16px;letter-spacing:4px;text-shadow:0 0 8px #141414,0 0 8px #141414}
+.btn.import:active{transform:none}
+
+/* page footer deco */
+.foot{position:relative;height:120px;max-width:640px;margin:0 auto;overflow:hidden}
+.foot .grid-deco.bl{left:-4px;right:auto;top:auto;bottom:-4px;width:170px;height:86px}
+.foot .xs{right:18px;top:auto;bottom:22px}
+
+#viewport{border:2px solid var(--ink);border-radius:6px}
+.reticle{border-radius:8px}
+.status{border-radius:6px}
+th{font-family:var(--mono);letter-spacing:.5px}
+.muted,.hint{line-height:1.45}
+@media (max-width:380px){ .mainbtn .mb-title{font-size:28px;padding-right:80px} .sec-head .ttl{font-size:12.5px} }
+@media (prefers-reduced-motion:reduce){ .view.on,.sec.live .live-dot{animation:none} }
 </style>
 </head>
 <body>
-<header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-gear" viewBox="0 0 64 64"><path d="M26.7 10.7 L27.5 3.4 L36.5 3.4 L37.3 10.7 L43.3 13.1 L49.0 8.5 L55.5 15.0 L50.9 20.7 L53.3 26.7 L60.6 27.5 L60.6 36.5 L53.3 37.3 L50.9 43.3 L55.5 49.0 L49.0 55.5 L43.3 50.9 L37.3 53.3 L36.5 60.6 L27.5 60.6 L26.7 53.3 L20.7 50.9 L15.0 55.5 L8.5 49.0 L13.1 43.3 L10.7 37.3 L3.4 36.5 L3.4 27.5 L10.7 26.7 L13.1 20.7 L8.5 15.0 L15.0 8.5 L20.7 13.1Z M24 32 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0Z" fill-rule="evenodd"/><circle cx="32" cy="32" r="15"/></symbol>
+    <symbol id="i-gearfill" viewBox="0 0 64 64"><path d="M26.7 10.7 L27.5 3.4 L36.5 3.4 L37.3 10.7 L43.3 13.1 L49.0 8.5 L55.5 15.0 L50.9 20.7 L53.3 26.7 L60.6 27.5 L60.6 36.5 L53.3 37.3 L50.9 43.3 L55.5 49.0 L49.0 55.5 L43.3 50.9 L37.3 53.3 L36.5 60.6 L27.5 60.6 L26.7 53.3 L20.7 50.9 L15.0 55.5 L8.5 49.0 L13.1 43.3 L10.7 37.3 L3.4 36.5 L3.4 27.5 L10.7 26.7 L13.1 20.7 L8.5 15.0 L15.0 8.5 L20.7 13.1Z M15 32 a17 17 0 1 0 34 0 a17 17 0 1 0 -34 0Z" fill-rule="evenodd" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-piston" viewBox="0 0 64 64">
+      <rect x="19" y="4" width="26" height="22" rx="3"/><path d="M19 10h26M19 14h26M19 18h26"/>
+      <path d="M24 22l3-3M30 24l8-8" opacity=".6"/>
+      <circle cx="32" cy="31" r="3.2"/><path d="M28.5 33.5 26.5 52M35.5 33.5 37.5 52"/><circle cx="32" cy="56" r="6"/><circle cx="32" cy="56" r="2"/>
+    </symbol>
+    <symbol id="i-bearing" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="28"/><circle cx="32" cy="32" r="16"/><circle cx="32" cy="32" r="9"/>
+      <circle cx="53" cy="32" r="3"/><circle cx="42.5" cy="50.2" r="3"/><circle cx="21.5" cy="50.2" r="3"/>
+      <circle cx="11" cy="32" r="3"/><circle cx="21.5" cy="13.8" r="3"/><circle cx="42.5" cy="13.8" r="3"/>
+    </symbol>
+    <symbol id="i-chain" viewBox="0 0 64 64">
+      <rect x="2" y="23" width="24" height="18" rx="9"/><rect x="20" y="23" width="24" height="18" rx="9"/><rect x="38" y="23" width="24" height="18" rx="9"/>
+      <circle cx="9" cy="32" r="2.6"/><circle cx="32" cy="32" r="2.6"/><circle cx="55" cy="32" r="2.6"/>
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 64 64">
+      <path d="M17 4h30l4 10H13z"/><path d="M13 14h38v6H13z"/><path d="M22 20v38l4 3h12l4-3V20"/>
+      <path d="M22 28l20 -4M22 35l20 -4M22 42l20 -4M22 49l20 -4"/>
+    </symbol>
+    <symbol id="i-wrench" viewBox="0 0 64 64">
+      <path d="M42 4a15 15 0 0 0-13 22L7 48a6 6 0 0 0 9 9l22-22a15 15 0 0 0 22-13l-9 8-8-2-2-8 8-9a15 15 0 0 0-3-3z"/>
+      <circle cx="12" cy="52" r="1.6"/>
+    </symbol>
+    <symbol id="i-spring" viewBox="0 0 64 64">
+      <circle cx="32" cy="7" r="5"/><path d="M32 12v6"/>
+      <path d="M17 22c10-5 20-5 30 0M17 30c10-5 20-5 30 0M17 38c10-5 20-5 30 0M17 46c10-5 20-5 30 0"/>
+      <path d="M17 22v8M47 22v8M17 30v8M47 30v8M17 38v8M47 38v8" opacity=".55"/><path d="M32 50v7"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 32 32"><path d="M7 7l18 18M25 7L7 25"/></symbol>
+    <clipPath id="band-clip"><path d="M0 0H64V22H0Z M0 42H64V64H0Z"/></clipPath>
+  </defs>
+</svg>
+<header class="top">
+  <div class="grid-deco" aria-hidden="true"></div>
+  <div class="xs" aria-hidden="true"><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg></div>
   <h1>ATTENDANCE <span>SCANNER</span></h1>
+  <div class="plate">SCAN &middot; LOG &middot; EXPORT</div>
   <div class="counts" id="counts">0 scanned</div>
 </header>
 
 <main>
-  <section>
-    <h2>1. Student registry</h2>
+
+<div class="view on" id="v-home" data-view="home">
+  <button type="button" class="mainbtn" data-go="event">
+    <span class="mb-no">01</span>
+    <span class="mb-title">EVENT TOOLS</span>
+    <span class="mb-sub">Registry &middot; Scan ID &middot; Log &middot; Data safety</span>
+    <svg class="orn mb-orn a" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-gear"/></svg><svg class="orn mb-orn b" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-piston"/></svg>
+  </button>
+  <button type="button" class="mainbtn" data-go="other">
+    <span class="mb-no">02</span>
+    <span class="mb-title">OTHER OPTIONS</span>
+    <span class="mb-sub">Combine phones &middot; Attendance layout</span>
+    <svg class="orn mb-orn a" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-wrench"/></svg><svg class="orn mb-orn b" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-spring"/></svg>
+  </button>
+</div>
+
+<div class="view" id="v-event" data-view="event">
+  <div class="viewbar">
+    <button type="button" class="back" data-go="home"><span aria-hidden="true">&#8249;</span> HOME</button>
+    <span class="vtitle">EVENT TOOLS</span>
+    <button type="button" class="mini" data-fold="collapse">&minus; ALL</button>
+    <button type="button" class="mini" data-fold="expand">+ ALL</button>
+  </div>
+
+  <section class="sec " id="sec-registry" data-key="registry">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-registry">
+      <span class="num">01</span><span class="ttl">STUDENT REGISTRY</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-reg" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-bearing"/></svg>
+    <div class="cbody" id="body-registry">
     <div class="row">
-      <label class="btn secondary" for="csvFile">Import CSV</label>
+      <label class="btn import" for="csvFile"><svg class="emb" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#i-gearfill" clip-path="url(#band-clip)"/></svg><span>IMPORT CSV</span></label>
       <input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain">
     </div>
     
     <p class="muted" id="regInfo"></p>
+    </div>
   </section>
 
-  <section>
-    <h2>2. Scan ID barcode</h2>
+  <section class="sec " id="sec-scan" data-key="scan">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-scan">
+      <span class="num">02</span><span class="ttl">SCAN ID BARCODE</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-scan" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-piston"/></svg>
+    <div class="cbody" id="body-scan">
     <div class="row">
       <button id="startBtn">Start camera</button>
       <button id="stopBtn" class="secondary" disabled>Stop camera</button>
@@ -149,10 +315,15 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
         <button id="manualBtn">Record</button>
       </div>
     </details>
+    </div>
   </section>
 
-  <section>
-    <h2>3. Attendance log</h2>
+  <section class="sec " id="sec-log" data-key="log">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-log">
+      <span class="num">03</span><span class="ttl">ATTENDANCE LOG</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-log" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-chain"/></svg>
+    <div class="cbody" id="body-log">
     <input type="search" id="logSearch" placeholder="Search a name or ID in the whole log" autocomplete="off" style="width:100%;box-sizing:border-box;margin-bottom:8px">
     <p class="muted" id="logNote"></p>
     <div class="tablewrap">
@@ -162,10 +333,15 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
       </table>
     </div>
     <div id="emptyMsg" class="empty">No one scanned yet.</div>
+    </div>
   </section>
 
-  <section>
-    <h2>4. Data safety</h2>
+  <section class="sec " id="sec-safety" data-key="safety">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-safety">
+      <span class="num">04</span><span class="ttl">DATA SAFETY</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-safe" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-bolt"/></svg>
+    <div class="cbody" id="body-safety">
     <div class="row" style="margin-bottom:8px">
       <input type="text" id="deviceName" maxlength="20" placeholder="This phone's name, e.g. Gate-A (goes in file names)" autocomplete="off" style="flex:1 1 100%">
     </div>
@@ -176,19 +352,42 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
       <input type="file" id="restoreFile" accept=".json,application/json">
       <button id="resetBtn" class="danger">Reset data</button>
     </div>
-    <h2 style="margin-top:18px">Combine several phones</h2>
+    <label class="toggle"><input type="checkbox" id="autoDl"> Auto-save a backup file every 50 scans</label>
+    <p class="muted">Every scan is saved instantly in two places on this phone: the quick-save and the app database (IndexedDB), plus two rotating backup copies a few seconds later. Export regularly to keep a copy off the device.</p>
+    <div class="backup" id="backupInfo"></div>
+    <div class="backup" id="storageInfo"></div>
+    </div>
+  </section>
+</div>
+
+<div class="view" id="v-other" data-view="other">
+  <div class="viewbar">
+    <button type="button" class="back" data-go="home"><span aria-hidden="true">&#8249;</span> HOME</button>
+    <span class="vtitle">OTHER OPTIONS</span>
+    <button type="button" class="mini" data-fold="collapse">&minus; ALL</button>
+    <button type="button" class="mini" data-fold="expand">+ ALL</button>
+  </div>
+
+  <section class="sec " id="sec-merge" data-key="merge">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-merge">
+      <span class="num">05</span><span class="ttl">COMBINE SEVERAL PHONES</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-merge" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-gear"/></svg>
+    <div class="cbody" id="body-merge">
     <div class="row">
       <label class="btn secondary" for="mergeFiles">🔀 Merge other phones' files</label>
       <input type="file" id="mergeFiles" accept=".json,.csv,.txt,application/json,text/csv,text/plain" multiple>
     </div>
     <p class="muted">On the main phone: tap this and select the other phones' <b>backup files</b> (or their exported CSVs) at once. Scans are added, and a student scanned on more than one phone is counted once, with the earliest time kept. Then tap Export CSV for a single file.</p>
-    <label class="toggle"><input type="checkbox" id="autoDl"> Auto-save a backup file every 50 scans</label>
-    <p class="muted">Every scan is saved instantly in two places on this phone: the quick-save and the app database (IndexedDB), plus two rotating backup copies a few seconds later. Export regularly to keep a copy off the device.</p>
-    <div class="backup" id="backupInfo"></div>
-    <div class="backup" id="storageInfo"></div>
+    </div>
   </section>
-  <section>
-    <h2>Attendance layout (Word or Excel)</h2>
+
+  <section class="sec " id="sec-layout" data-key="layout">
+    <button type="button" class="sec-head" aria-expanded="true" aria-controls="body-layout">
+      <span class="num">06</span><span class="ttl">ATTENDANCE LAYOUT</span><span class="live-dot" aria-hidden="true">LIVE</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <svg class="orn o-layout" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-wrench"/></svg>
+    <div class="cbody" id="body-layout">
     <div class="row">
       <label class="btn secondary" for="layoutFile">📄 Import layout (.docx / .xlsx)</label>
       <input type="file" id="layoutFile" accept=".docx,.xlsx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
@@ -203,8 +402,15 @@ body.drag main{outline:3px dashed var(--accent);outline-offset:-6px}
       <button id="docxBtn">⬇ Save as DOCX / XLSX</button>
     </div>
     <p class="muted">Your Word or Excel file needs a table whose heading row has names like No., ID, Name, Email, Date, Time, Signature. The rows under it are replaced by the scans, and anything below the table (signature lines, notes) moves down. Optional: type {{DATE}} or {{TOTAL}} anywhere in the text. <b>Save as DOCX / XLSX</b> keeps your exact design. Fonts, colours, borders, merged cells and logos in Preview are redrawn from your file. Everything works offline.</p>
+    </div>
   </section>
+</div>
 </main>
+<footer class="foot" aria-hidden="true">
+  <div class="grid-deco bl"></div>
+  <div class="xs"><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg><svg class="orn" viewBox="0 0 32 32"><use href="#i-x"/></svg></div>
+</footer>
+
 
 <div id="printSheet"></div>
 <style id="pageStyle"></style>
@@ -1779,6 +1985,45 @@ window.addEventListener("pagehide",()=>stopCamera());
 
 load().then(showStorageInfo);
 if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){ window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+})();
+</script>
+
+<script>
+/* Layout only: switching screens and folding categories. Does not touch scanning, storage, merge or export. */
+(function(){
+  var KEY="attendanceUi.v1", st={c:{}};
+  try{ var raw=localStorage.getItem(KEY); if(raw){ var p=JSON.parse(raw); if(p&&typeof p==="object") st=p; if(!st.c) st.c={}; } }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
+  var views={}; document.querySelectorAll(".view").forEach(function(v){ views[v.dataset.view]=v; });
+  function show(name){
+    if(!views[name]) name="home";
+    if(name!=="event"){ var sb=document.getElementById("stopBtn"); if(sb&&!sb.disabled) sb.click(); }   // leaving the scan screen switches the camera off
+    for(var k in views) views[k].classList.toggle("on",k===name);
+    window.scrollTo(0,0);
+  }
+  function go(name){ show(name); try{ history.pushState({v:name},""); }catch(e){} }
+  try{ history.replaceState({v:"home"},""); }catch(e){}
+  window.addEventListener("popstate",function(e){ show(e.state&&e.state.v||"home"); });
+  document.addEventListener("click",function(e){
+    var g=e.target.closest("[data-go]"); if(g){ go(g.dataset.go); return; }
+    var h=e.target.closest(".sec-head"); if(h){ fold(h.parentElement); return; }
+    var f=e.target.closest("[data-fold]"); if(f){
+      var all=f.closest(".view").querySelectorAll("section.sec");
+      all.forEach(function(s){ fold(s,f.dataset.fold==="collapse",true); }); save();
+    }
+  });
+  function fold(sec,collapse,batch){
+    if(typeof collapse!=="boolean") collapse=!sec.classList.contains("collapsed");
+    sec.classList.toggle("collapsed",collapse);
+    sec.querySelector(".sec-head").setAttribute("aria-expanded",String(!collapse));
+    st.c[sec.dataset.key]=collapse; if(!batch) save();
+  }
+  document.querySelectorAll("section.sec").forEach(function(s){ if(st.c[s.dataset.key]) fold(s,true,true); });
+  var vp=document.getElementById("viewport"), scan=document.getElementById("sec-scan");
+  if(vp&&scan&&window.MutationObserver){
+    var sync=function(){ scan.classList.toggle("live",vp.classList.contains("on")); };
+    new MutationObserver(sync).observe(vp,{attributes:true,attributeFilter:["class"]}); sync();
+  }
 })();
 </script>
 </body>
