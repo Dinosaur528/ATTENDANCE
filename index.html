@@ -1681,7 +1681,14 @@ async function scanFiles(files){
       if(files.length===1) showPreview(cv);
       const codes=await decodeCanvas(cv,false);
       if(!codes.length){ fail++; continue; }
-      for(const c of codes){
+      // v8: one photo = one scan. The decoder can return several readings of the SAME barcode (the phone's built-in reader
+      // says "9555704" while the app's own decoder says "S555704"). Logging every reading made the first one register the
+      // student and the second one replace the success message with "Already scanned".
+      const exact=codes.filter(c=>findKey(normId(c)));
+      let use;
+      if(exact.length){ const seen=new Set(); use=exact.filter(c=>{ const k=findKey(normId(c)); if(seen.has(k)) return false; seen.add(k); return true; }); }
+      else use=[codes[0]];   // nothing matches the registry exactly: act on the single best reading only
+      for(const c of use){
         const r=record(c,{force:true,quiet:files.length>1});
         if(r==="ok")ok++; else if(r==="warn")warn++; else if(r==="dup")dup++; else if(r==="bad")fail++; else if(r==="confirm"||r==="choose")conf++;
         last=c;
