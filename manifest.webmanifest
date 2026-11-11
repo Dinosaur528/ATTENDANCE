@@ -1,7 +1,8 @@
 {
-  "name": "Attendance Scanner",
-  "short_name": "Attendance",
+  "name": "SOMES ATTENDANCE",
+  "short_name": "SOMES",
   "description": "Scan student ID barcodes and log attendance. Works offline.",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
